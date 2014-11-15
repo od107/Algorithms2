@@ -1,4 +1,7 @@
 import java.util.*;
+// TODO
+// the private methods can be reworked into 2 and probably 1 method
+// check efficiency first
 
 public class SAP {
 	private Digraph DG;
