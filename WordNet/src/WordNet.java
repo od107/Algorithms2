@@ -1,9 +1,8 @@
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public class WordNet {
 	//throwing of all these exceptions might not be necessary
-	private Map<String, Integer> wordmap = new HashMap<String, Integer>();
+	private Map<String, List<Integer>> wordmap = new HashMap<String, List<Integer>>();
 	private Map<Integer, String> reverseMap = new HashMap<Integer, String>();
 	private SAP sap; 
 
@@ -18,8 +17,22 @@ public class WordNet {
 	   
 	   while (synsetIn.hasNextLine()) {
 		   String[] fields = synsetIn.readLine().split(",");
-		   wordmap.put(fields[1], Integer.parseInt(fields[0]));
 		   reverseMap.put(Integer.parseInt(fields[0]), fields[1]);
+		   
+		   String[] synset = fields[1].split(" ");
+		   for (int i = 0; i < synset.length ; i++) {
+			   List<Integer> list;
+			   
+			   if (wordmap.containsKey(synset[i])) 
+				   list = wordmap.get(synset[i]);
+			   else 
+				   list = new ArrayList<Integer>();
+			   
+			   list.add(Integer.parseInt(fields[0]));
+			   wordmap.put(synset[i], list);
+		   }
+		   
+		   
 		   nbrOfVertices = fields[0];
 	   }
 //	   System.out.println(wordmap);
@@ -33,15 +46,20 @@ public class WordNet {
 			   DG.addEdge(Integer.parseInt(fields[0]), Integer.parseInt(fields[i]));
 		   }
 	   }
-	   if (!isDAG(DG))
+	   if (!isDAGwSingleRoot(DG))
 		   throw new java.lang.IllegalArgumentException();
 	   
-//	   System.out.println(DG);
+//	   System.out.println("number of vertices:" + DG.V());
+//	   System.out.println("number of edges:" + DG.E());
 	   sap = new SAP(DG);
    }
    
-   private boolean isDAG(Digraph DG){
+   private boolean isDAGwSingleRoot(Digraph DG){
 	   //TODO implement this method
+	   //check for cycles DFS, see if you encounter yourself
+	   DirectedCycle cycle = new DirectedCycle(DG);
+	   if (cycle.hasCycle())
+		   return false;
 	   
 	   return true;
    }
@@ -64,8 +82,8 @@ public class WordNet {
 //		   throw new java.lang.NullPointerException();
 //	   if (!isNoun(nounA) || !isNoun(nounB))
 //		   throw new java.lang.IllegalArgumentException();
-	   int intA = wordmap.get(nounA);
-	   int intB = wordmap.get(nounB);
+	   List<Integer> intA = wordmap.get(nounA);
+	   List<Integer> intB = wordmap.get(nounB);
 	   return sap.length(intA, intB);
    }
 
@@ -76,20 +94,23 @@ public class WordNet {
 //		   throw new java.lang.NullPointerException();
 //	   if (!isNoun(nounA) || !isNoun(nounB))
 //		   throw new java.lang.IllegalArgumentException();
-	   int intA = wordmap.get(nounA);
-	   int intB = wordmap.get(nounB);
+	   List<Integer> intA = wordmap.get(nounA);
+	   List<Integer> intB = wordmap.get(nounB);
 	   int result = sap.ancestor(intA, intB);
 	   return reverseMap.get(result);
    }
 
    // do unit testing of this class
    public static void main(String[] args) {
-	   String synset = "testing/synsets15.txt"; //synsets.txt is the complete
-	   String hypernym = "testing/hypernymsTree15.txt";
+	   String synset = "testing/synsets.txt"; //synsets.txt is the complete
+	   String hypernym = "testing/hypernyms.txt";
+	   
+	   String wordA = "Brown_Swiss";
+	   String wordB = "barrel_roll";
 	   
 	   WordNet WN = new WordNet(synset,hypernym);
-	   System.out.println("is this noun in the list? " + WN.isNoun("boo"));
-	   System.out.println("distance: " + WN.distance("a","m"));
-	   System.out.println("the common ancestor is: " + WN.sap("a", "m"));
+	   System.out.println("is this noun in the list? " + WN.isNoun(wordA));
+	   System.out.println("distance: " + WN.distance(wordA,wordB));
+	   System.out.println("the common ancestor is: " + WN.sap(wordA,wordB));
    }
 }
