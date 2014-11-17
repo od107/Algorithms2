@@ -166,7 +166,7 @@ public class SAP {
    
    // do unit testing of this class
    public static void main(String[] args) {
-	    In in = new In("testing/digraph1.txt"); //args[0]);
+	    In in = new In("testing/digraph3.txt"); //args[0]);
 	    Digraph G = new Digraph(in);
 	    SAP sap = new SAP(G);
 	    

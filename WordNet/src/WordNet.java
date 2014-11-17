@@ -71,8 +71,8 @@ public class WordNet {
 
    // is the word a WordNet noun?
    public boolean isNoun(String word) {
-//	   if (word == null)
-//		   throw new java.lang.NullPointerException();
+	   if (word == null)
+		   throw new java.lang.NullPointerException();
 	   return wordmap.containsKey(word);
    }
 
@@ -80,8 +80,8 @@ public class WordNet {
    public int distance(String nounA, String nounB) {
 //	   if (nounA == null || nounB == null)
 //		   throw new java.lang.NullPointerException();
-//	   if (!isNoun(nounA) || !isNoun(nounB))
-//		   throw new java.lang.IllegalArgumentException();
+	   if (!isNoun(nounA) || !isNoun(nounB))
+		   throw new java.lang.IllegalArgumentException();
 	   List<Integer> intA = wordmap.get(nounA);
 	   List<Integer> intB = wordmap.get(nounB);
 	   return sap.length(intA, intB);
@@ -92,8 +92,8 @@ public class WordNet {
    public String sap(String nounA, String nounB) {
 //	   if (nounA == null || nounB == null)
 //		   throw new java.lang.NullPointerException();
-//	   if (!isNoun(nounA) || !isNoun(nounB))
-//		   throw new java.lang.IllegalArgumentException();
+	   if (!isNoun(nounA) || !isNoun(nounB))
+		   throw new java.lang.IllegalArgumentException();
 	   List<Integer> intA = wordmap.get(nounA);
 	   List<Integer> intB = wordmap.get(nounB);
 	   int result = sap.ancestor(intA, intB);
