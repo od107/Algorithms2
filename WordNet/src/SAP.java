@@ -95,8 +95,8 @@ public class SAP {
 				   sol[0] = current;
 				   sol[1] = map.get(current) + mapv.get(current);
 			   }
-			   else //if vertex is already visited with a better value do not add neighbours
-				   continue; // early stopping
+//			   else //if vertex is already visited with a better value do not add neighbours
+//				   continue; // early stopping
 		   }
 			   
 		   for(int adj : DG.adj(current)) {
@@ -149,8 +149,8 @@ public class SAP {
 				   sol[0] = current;
 				   sol[1] = map.get(current) + mapv.get(current);
 			   }
-			   else //if vertex is already visited with a better value do not add neighbours
-				   continue; // early stopping
+//			   else //if vertex is already visited with a better value do not add neighbours
+//				   continue; // early stopping
 		   }
 			   
 		   for(int adj : DG.adj(current)) {
