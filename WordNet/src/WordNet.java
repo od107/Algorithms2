@@ -1,7 +1,6 @@
 import java.util.*;
 
 public class WordNet {
-	//throwing of all these exceptions might not be necessary
 	private Map<String, List<Integer>> wordmap = new HashMap<String, List<Integer>>();
 	private Map<Integer, String> reverseMap = new HashMap<Integer, String>();
 	private SAP sap; 
@@ -31,22 +30,21 @@ public class WordNet {
 			   list.add(Integer.parseInt(fields[0]));
 			   wordmap.put(synset[i], list);
 		   }
-		   
-		   
 		   nbrOfVertices = fields[0];
 	   }
 //	   System.out.println(wordmap);
 	   
 	   //need to get the hypernyms in the DAG
 	   // use input stream constructor but first determine the number of vertices and edges
-	   Digraph DG = new Digraph(1 + Integer.parseInt(nbrOfVertices));
+	   int size = 1 + Integer.parseInt(nbrOfVertices);
+	   Digraph DG = new Digraph(size);
 	   while (hypernymIn.hasNextLine()) {
 		   String[] fields = hypernymIn.readLine().split(",");
 		   for(int i = 1; i < fields.length ; i++) {
 			   DG.addEdge(Integer.parseInt(fields[0]), Integer.parseInt(fields[i]));
 		   }
 	   }
-	   if (!isDAGwSingleRoot(DG))
+	   if (!isDAGwSingleRoot(DG, size))
 		   throw new java.lang.IllegalArgumentException();
 	   
 //	   System.out.println("number of vertices:" + DG.V());
@@ -54,13 +52,21 @@ public class WordNet {
 	   sap = new SAP(DG);
    }
    
-   private boolean isDAGwSingleRoot(Digraph DG){
-	   //TODO implement this method
+   private boolean isDAGwSingleRoot(Digraph DG, int size){
 	   //check for cycles DFS, see if you encounter yourself
 	   DirectedCycle cycle = new DirectedCycle(DG);
 	   if (cycle.hasCycle())
 		   return false;
-	   
+	   //check for single root: traverse all vertices and count the ones without adj
+	   int nbrOfRoots = 0;
+	   for (int i=0 ; i< size ; i++) {
+		   Iterator<Integer> iter = DG.adj(i).iterator();
+		   if (!iter.hasNext()) {
+			   nbrOfRoots++;
+			   if (nbrOfRoots > 1)
+				   return false;
+		   }
+	   }
 	   return true;
    }
 
@@ -78,8 +84,6 @@ public class WordNet {
 
    // distance between nounA and nounB (defined below)
    public int distance(String nounA, String nounB) {
-//	   if (nounA == null || nounB == null)
-//		   throw new java.lang.NullPointerException();
 	   if (!isNoun(nounA) || !isNoun(nounB))
 		   throw new java.lang.IllegalArgumentException();
 	   List<Integer> intA = wordmap.get(nounA);
@@ -90,8 +94,6 @@ public class WordNet {
    // a synset (second field of synsets.txt) that is the common ancestor of nounA and nounB
    // in a shortest ancestral path (defined below)
    public String sap(String nounA, String nounB) {
-//	   if (nounA == null || nounB == null)
-//		   throw new java.lang.NullPointerException();
 	   if (!isNoun(nounA) || !isNoun(nounB))
 		   throw new java.lang.IllegalArgumentException();
 	   List<Integer> intA = wordmap.get(nounA);
@@ -103,7 +105,7 @@ public class WordNet {
    // do unit testing of this class
    public static void main(String[] args) {
 	   String synset = "testing/synsets.txt"; //synsets.txt is the complete
-	   String hypernym = "testing/hypernyms.txt";
+	   String hypernym = "testing/hypernymsTree15.txt";
 	   
 	   String wordA = "Brown_Swiss";
 	   String wordB = "barrel_roll";
