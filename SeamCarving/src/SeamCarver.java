@@ -2,33 +2,45 @@ import java.awt.Color;
 
 public class SeamCarver {
 	private Picture pic;
+	// these can be removed or moved in the related methods
+	// putting them here improves reuse between calls
+	
 	private int[][] energy; // save memory and change to short?
-	private int[][] path;
-	private int[][] nrgcompounded;
+	private int[][] nrgCompounded;
+	private int[][] energyTransposed;
+	private int[][] nrgCompoundedTransposed;
+	private boolean[][] deleted;
 	
    public SeamCarver(Picture picture) {
 	   // create a seam carver object based on the given picture
 	   pic = picture;
-	   path = new int[pic.width()][pic.height()];
 	   energy = new int[pic.width()][pic.height()];
-	   nrgcompounded = new int[pic.width()][pic.height()];
+	   nrgCompounded = new int[pic.width()][pic.height()];
+	   energyTransposed = new int[pic.height()][pic.width()];
+	   nrgCompoundedTransposed = new int[pic.height()][pic.width()];
+	   deleted = new boolean[pic.width()][pic.height()];
 	   
 	   for (int i = 0; i < pic.width() ; i++)
-		   for (int j = 0; j < pic.height() ; j++)
+		   for (int j = 0; j < pic.height() ; j++) {
 			   energy[i][j] = (int) energy(i,j);
+			   energyTransposed[j][i] = (int) energy(i,j);
+		   }
    }
    public Picture picture() {
 	   // current picture
 	   return pic;
    }
+   
    public     int width() {
 	   // width of current picture
 	   return pic.width();
    }
+   
    public     int height() {
 	   // height of current picture
 	   return pic.height();
    }
+   
    public  double energy(int x, int y) {
 	   // energy of pixel at column x and row y
 	   if (x == width() - 1 || x == 0 || y == height() - 1 || y == 0)
@@ -53,82 +65,98 @@ public class SeamCarver {
 	   
 	   return R*R + G*G + B*B;
    }
-   public   int[] findHorizontalSeam() {
+   
+   public int[] findHorizontalSeam() {
 	   // sequence of indices for horizontal seam
 	   
-	   return new int[pic.width()];
+	   return findVerticalSeam(energyTransposed, nrgCompoundedTransposed);
    }
-   public   int[] findVerticalSeam() {
+   
+   public int[] findVerticalSeam() {
 	   // sequence of indices for vertical seam
 	   //transform energy matrix to compound energy matrix
-	   int[] seam = new int[pic.height()];
+	   return findVerticalSeam(energy, nrgCompounded);
+   }
+   
+   private int[] findVerticalSeam(int[][] energy, int[][] nrgCompounded) {
+	   int[] seam = new int[energy[0].length];
+	   int[] distTo = new int[energy.length];
+	   int[][] Path = new int[energy.length][energy[0].length];
 	   
-	   for (int j = 0 ; j < pic.height() ; j++) {
-		   for (int i = 0 ; i < pic.width() ; i++) {
-			   relax(i,j);
+	   for (int j = 0 ; j < energy[0].length ; j++) {
+		   for (int i = 0 ; i < energy.length ; i++) {
+			   if (j == energy[0].length - 1)
+				   distTo[i] = relax(i,j, energy, nrgCompounded, Path);
+			   else
+				   relax(i,j, energy, nrgCompounded, Path);
 		   }
 	   }
-	   // lowest element bottom row of compound energy matrix indicates seam
-
-	   int pos = Integer.MAX_VALUE;
-	   for (int i = 1 ; i < pic.width() - 1 ; i++) {
-		   if (nrgcompounded[i][pic.height()-1] < pos)
+	   
+	   // find lowest element of bottom row of compound energy matrix to find seam start
+	   int pos = -1;
+	   int min = Integer.MAX_VALUE;
+	   for (int i = 1 ; i < energy.length - 1 ; i++) {
+		   if (nrgCompounded[i][energy[0].length - 1] < min) {
+			   min = nrgCompounded[i][energy[0].length - 1];
 			   pos = i;
+		   }
 	   }
 
 	   //test
-	   for (int j = 0; j < height(); j++)
-       {
-           for (int i = 0; i < width(); i++)
-               System.out.print(nrgcompounded[i][j] +"\t");
-           System.out.println();
-       }
-	   System.out.println();
-	   for (int j = 0; j < height(); j++)
-	   {
-           for (int i = 0; i < width(); i++)
-               System.out.print(path[i][j] +"\t");
-           System.out.println();
-       }
-	   System.out.println();
+//	   show(nrgCompounded);
+//	   show(Path);
 	   
-	   // we can look for the smallest of the 3 above or follow the path
-	   for (int j = pic.height() - 1 ; j >= 0 ; j--) {
+	   // construct seam from path
+	   for (int j = energy[0].length - 1 ; j >= 0 ; j--) {
 		   seam[j] = pos;
-		   pos += path[pos][j];
+		   pos += Path[pos][j];
 	   }
 	   
 	   return seam;
    }
    
-   private void relax(int i, int j) {
-//	   if (i == width() - 1 || i == 0 || j == height() - 1 || j == 0)
+   private void show(int[][] array) {
+	   for (int j = 0; j < array[0].length; j++) {
+           for (int i = 0; i < array.length ; i++)
+               System.out.print(array[i][j] +"\t");
+           System.out.println();
+       }
+	   System.out.println();
+   }
+   
+   private int relax(int i, int j, int[][] energy, int[][] nrgCompounded, int[][] Path) {
+	   // in a later phase remove nrgcompounded and only create the single last line
 	
 	   if (j == 0) {
-		   nrgcompounded[i][j] = energy[i][j];
-//		   path[i][j] = 0;
-		   return;
+		   nrgCompounded[i][j] = energy[i][j];
+		   return -1;
 	   }
 	   int smallest = Integer.MAX_VALUE;
 	   for (int k = -1 ; k < 2 ; k++) {
-		   if (i + k > pic.width() - 1 || i + k < 0)
+		   if (i + k > energy.length - 1 || i + k < 0)
 			   continue;
-		   if (nrgcompounded[i + k][j - 1] < smallest) {
+		   if (nrgCompounded[i + k][j - 1] < smallest) {
 			   //this line is not correct
-			   smallest = nrgcompounded[i + k][j - 1];
-			   nrgcompounded[i][j] = energy[i][j] + nrgcompounded[i + k][j - 1];
-			   path[i][j] = k;
+			   smallest = nrgCompounded[i + k][j - 1];
+			   nrgCompounded[i][j] = energy[i][j] + nrgCompounded[i + k][j - 1];
+			   Path[i][j] = k;
 		   }
 	   }
+	   return nrgCompounded[i][j];
    }
    
-   public    void removeHorizontalSeam(int[] seam) {
+   public void removeHorizontalSeam(int[] seam) {
 	   // remove horizontal seam from current picture
 	   
    }
-   public    void removeVerticalSeam(int[] seam) {
+   public void removeVerticalSeam(int[] seam) {
 	   // remove vertical seam from current picture
-	   
+	   for (int i=0 ; i < seam.length ; i++) {
+		   int index = seam[i];
+		   deleted[index][i] = true;
+//		   System.arraycopy(energy, index + 1, energy, index, energy.length - index);
+		   
+	   }
    }
    
    
