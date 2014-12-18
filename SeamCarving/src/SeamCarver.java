@@ -9,7 +9,10 @@ public class SeamCarver {
 	private int[][] nrgCompounded;
 	private int[][] energyTransposed;
 	private int[][] nrgCompoundedTransposed;
-	private boolean[][] deleted;
+	private boolean[][] deleted; //to keep track which pixels have been deleted
+	private LastCalc lastcalc;
+	
+	private enum LastCalc {HOR, VERT};
 	
    public SeamCarver(Picture picture) {
 	   // create a seam carver object based on the given picture
@@ -20,6 +23,7 @@ public class SeamCarver {
 	   nrgCompoundedTransposed = new int[pic.height()][pic.width()];
 	   deleted = new boolean[pic.width()][pic.height()];
 	   
+	   //fill energy and energytransposed
 	   for (int i = 0; i < pic.width() ; i++)
 		   for (int j = 0; j < pic.height() ; j++) {
 			   energy[i][j] = (int) energy(i,j);
@@ -69,7 +73,22 @@ public class SeamCarver {
    public int[] findHorizontalSeam() {
 	   // sequence of indices for horizontal seam
 	   
+	   //to be used if we're not storing transposed anymire
+	   if (lastcalc != LastCalc.HOR) {
+		   
+	   }
 	   return findVerticalSeam(energyTransposed, nrgCompoundedTransposed);
+   }
+   
+   private int[][] transpose(int[][] energy) {
+	   int[][] transposed = new int[energy[0].length][energy.length];
+   
+	   for (int j = 0 ; j < energy[0].length ; j++) {
+		   for (int i = 0 ; i < energy.length ; i++) {
+			   transposed[j][i] = energy[i][j];
+		   }
+	   }
+	   return transposed;
    }
    
    public int[] findVerticalSeam() {
@@ -80,7 +99,7 @@ public class SeamCarver {
    
    private int[] findVerticalSeam(int[][] energy, int[][] nrgCompounded) {
 	   int[] seam = new int[energy[0].length];
-	   int[] distTo = new int[energy.length];
+	   int[] distTo = new int[energy.length]; //= values at bottom row of compound energy
 	   int[][] Path = new int[energy.length][energy[0].length];
 	   
 	   for (int j = 0 ; j < energy[0].length ; j++) {
@@ -116,6 +135,7 @@ public class SeamCarver {
    }
    
    private void show(int[][] array) {
+	   //for testing purposes
 	   for (int j = 0; j < array[0].length; j++) {
            for (int i = 0; i < array.length ; i++)
                System.out.print(array[i][j] +"\t");
@@ -126,11 +146,10 @@ public class SeamCarver {
    
    private int relax(int i, int j, int[][] energy, int[][] nrgCompounded, int[][] Path) {
 	   // in a later phase remove nrgcompounded and only create the single last line
-	
-	   if (j == 0) {
-		   nrgCompounded[i][j] = energy[i][j];
-		   return -1;
-	   }
+
+	   if (j == 0) 
+		   return nrgCompounded[i][j] = energy[i][j];
+
 	   int smallest = Integer.MAX_VALUE;
 	   for (int k = -1 ; k < 2 ; k++) {
 		   if (i + k > energy.length - 1 || i + k < 0)
