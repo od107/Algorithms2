@@ -10,6 +10,8 @@ public class SeamCarver {
 	private int[][] energyTransposed;
 //	private int[][] nrgCompoundedTransposed;
 	private boolean[][] deleted; //to keep track which pixels have been deleted
+	private int[][] newpic;
+	private int[][] newpicTransposed;
 	private LastCalc lastcalc;
 	private int cols, rows;
 	
@@ -25,33 +27,47 @@ public class SeamCarver {
 	   energyTransposed = new int[rows][cols];
 //	   nrgCompoundedTransposed = new int[rows][cols];
 	   deleted = new boolean[cols][rows];
+	   newpic= new int[cols][rows];
+	   newpicTransposed = new int[rows][cols];
 
-	   
 	   //fill energy and energytransposed
 	   for (int i = 0; i < cols ; i++)
 		   for (int j = 0; j < rows ; j++) {
 			   energy[i][j] = (int) energy(i,j);
 			   energyTransposed[j][i] = (int) energy(i,j);
+			   Color color = pic.get(i, j);
+			   newpic[i][j] = color.getRGB();
+			   newpicTransposed[j][i] = color.getRGB();
 		   }
+	   
+	   
    }
    public Picture picture() {
-	   // current picture
-	   Picture newpic = new Picture(cols,rows);
-//	   double[][] newpic = new double[cols][rows];
-	   
-	   for (int j = 0; j < pic.height() ; j++) {
-		   int vertRemoved = 0;
-	   	   for (int i = 0; i < pic.width() ; i++) {
-			   int horRemoved = 0;
-			   if (!deleted[i][j]) {
-				   newpic.set(i-horRemoved, j-vertRemoved, pic.get(i, j));
-//				   newpic[i-horRemoved][j-vertRemoved] = pic[i][j];
-				   
-			   }
+	   // old method
+//	   Picture newpic = new Picture(cols,rows);
+//	   
+//	   for (int j = 0; j < pic.height() ; j++) {
+//		   int vertRemoved = 0;
+//	   	   for (int i = 0; i < pic.width() ; i++) {
+//			   int horRemoved = 0;
+//			   if (!deleted[i][j]) {
+//				   newpic.set(i-horRemoved, j-vertRemoved, pic.get(i, j));
+//				   
+//			   }
+//			   else {
+//				   
+//			   }
+//		   }
+//	   }
+	   Picture newPicture = new Picture(cols,rows);
+	   for (int i = 0; i < cols; i++) {
+		   for(int j = 0; j < rows; j++) {
+			   newPicture.set(i, j, new Color(newpic[i][j]));
 		   }
 	   }
+	   
 	   //TODO: keep into account the deleted rows and columns
-	   return pic;
+	   return newPicture;
    }
    
    public     int width() {
@@ -183,7 +199,7 @@ public class SeamCarver {
 
 	   int smallest = Integer.MAX_VALUE;
 	   for (int k = -1 ; k < 2 ; k++) {
-		   if (i + k > energy.length - 1 || i + k < 0)
+		   if (i + k > nrgCompounded.length - 1 || i + k < 0)
 			   continue;
 		   if (nrgCompounded[i + k][j - 1] < smallest) {
 			   //this line is not correct
@@ -198,13 +214,17 @@ public class SeamCarver {
    public void removeHorizontalSeam(int[] seam) {
 	   // remove horizontal seam from current picture
 	   rows--;
+	   
 	   for (int i=0 ; i < seam.length ; i++) {
 		   int index = seam[i];
 		   deleted[i][index] = true;
-		   System.arraycopy(energyTransposed, index + 1, energyTransposed, index, cols - index);
-		   //also modify the image here?
-		   energy = transpose(energyTransposed);
+		   System.arraycopy(energyTransposed, index + 1, energyTransposed, index, rows - index);
+		   System.arraycopy(newpicTransposed, index + 1, newpicTransposed, index, rows - index);
 	   }
+	   energy = transpose(energyTransposed);
+	   newpic = transpose(newpicTransposed);
+	   
+	   recalc(seam, false);
    }
    public void removeVerticalSeam(int[] seam) {
 	   // remove vertical seam from current picture
@@ -213,22 +233,36 @@ public class SeamCarver {
 		   int index = seam[i];
 		   deleted[index][i] = true;
 		   System.arraycopy(energy, index + 1, energy, index, cols - index);
-		   //also modify the image here?
+		   System.arraycopy(newpic, index + 1, newpic, index, cols - index);
 	   }
 	   energyTransposed = transpose(energy); // or cheaper to shift in transposed?
+	   newpicTransposed = transpose(newpic);
 	   
-	   recalc(seam);
+	   recalc(seam, true);
    }
    
-   private void recalc(int[] seam) {
-	   for (int i=0 ; i < seam.length ; i++) {
-		   int index = seam[i];
-		   if (index > 0) {
-			   energy[index-1][i] = (int) energy(index-1,i);
-			   energyTransposed[i][index-1] = (int) energy(i,index-1);
+   private void recalc(int[] seam, boolean vertical) {
+	   if (vertical) {
+		   for (int i=0 ; i < seam.length ; i++) {
+			   int index = seam[i];
+			   if (index > 0) {
+				   energy[index-1][i] = (int) energy(index-1,i);
+				   energyTransposed[i][index-1] = energy[index-1][i];
+			   }
+			   energy[index][i] = (int) energy(index,i);
+			   energyTransposed[i][index] = energy[index][i];
 		   }
-		   energy[index][i] = (int) energy(index,i);
-		   energyTransposed[i][index] = (int) energy(i,index);
+	   }
+	   else {
+		   for (int i=0 ; i < seam.length ; i++) {
+			   int index = seam[i];
+			   if (index > 0) {
+				   energy[i][index-1] = (int) energy(i,index-1);
+				   energyTransposed[index-1][i] = energy[i][index-1];
+			   }
+			   energy[i][index] = (int) energy(i,index);
+			   energyTransposed[index][i] = energy[i][index];
+		   }
 	   }
    }
    
