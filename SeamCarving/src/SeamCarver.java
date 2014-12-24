@@ -1,12 +1,10 @@
 import java.awt.Color;
 
 public class SeamCarver {
-	//TODO: test whether this version is faster, or the previous one without transpose detection
-	//change the previous one so the recalcSeamBorders get called before transposing 
-	//and this method adapts only 1 version
+	//possible improvements:
 	
 	//calling findVerticalSeam and then removeVerticalSeam (same with hor) makes transposes necessary
-	//no performance gain if calling 50 removerows after each other
+	//no performance gain if calling 50 remove rows after each other
 	//can be solved by: adapting the remove method, multiple arraycopies per line (would be more calculation intensive)
 	// or by adapting the findSeam method so it works in the other direction
 	
@@ -19,9 +17,6 @@ public class SeamCarver {
 	private int cols, rows;
 	private boolean energyValid, energyTransposedValid, picValid, picTransposedValid;
 	
-//	private LastRemoved lastRemoved; // how to test for enums?
-//	private enum LastRemoved {HOR, VERT};
-
 	public SeamCarver(Picture picture) {
 		// create a seam carver object based on the given picture
 		cols = picture.width();
@@ -36,7 +31,7 @@ public class SeamCarver {
 			for (int j = 0; j < rows ; j++) {
 				Color color = picture.get(i, j);
 				newpic[i][j] = color.getRGB();
-				newpicTransposed[j][i] = color.getRGB();
+				newpicTransposed[j][i] = newpic[i][j];
 			}
 		picValid = true;
 		picTransposedValid = true;
@@ -44,7 +39,7 @@ public class SeamCarver {
 		for (int i = 0; i < cols ; i++)
 			for (int j = 0; j < rows ; j++) {
 				energy[i][j] = (int) energy(i,j);
-				energyTransposed[j][i] = (int) energy(i,j);
+				energyTransposed[j][i] = energy[i][j];
 			}
 		energyValid = true;
 		energyTransposedValid = true;
@@ -75,7 +70,7 @@ public class SeamCarver {
    }
    
    public  double energy(int x, int y) {
-	   if (x >= cols || y >= rows)
+	   if (x >= energy.length || y >= energy[0].length || x < 0 || y < 0)
 		   throw new IndexOutOfBoundsException();
 	   // energy of pixel at column x and row y
 	   if (x == width() - 1 || x == 0 || y == height() - 1 || y == 0)
@@ -103,36 +98,38 @@ public class SeamCarver {
    
    public int[] findHorizontalSeam() {
 	   // sequence of indices for horizontal seam
-	   return findVerticalSeam(true); 
+	   return findVerticalSeam(false); 
    }
    
    public int[] findVerticalSeam() {
 	   // sequence of indices for vertical seam
-	   return findVerticalSeam(false); 
+	   return findVerticalSeam(true); 
    }
    
-   private int[] findVerticalSeam(boolean transposed) { 
+   private int[] findVerticalSeam(boolean vertical) { 
+	   //TODO:
+	   // in this version we use transposed energy for verticalseam
+	   // and the original energy for finding horizontalseam
 	   int width, height;
 	   int[][] currentEnergy;
-	   if (transposed) {
+	   if (!vertical) { 
 		   width = rows;
 		   height = cols;
-		   if (!energyTransposedValid) {
+		   if (!energyTransposedValid) { 
 			   energyTransposed = transpose(energy);
 			   energyTransposedValid = true;
 		   }
 		   currentEnergy = energyTransposed; 
 	   }
-	   else {
+	   else { //horizontalseam
 		   width = cols;
 		   height = rows;
-		   if (!energyValid) {
+		   if (!energyValid) { 
 			   energy = transpose(energyTransposed);
 			   energyValid = true;
 		   }
 		   currentEnergy = energy;
 	   }
-		   
 	   int[] seam = new int[height];
 	   int[] distTo = new int[width]; //= values at bottom row of compound energy
 	   int[][] Path = new int[width][height];
@@ -158,6 +155,7 @@ public class SeamCarver {
 	   }
 
 	   //test
+//	   show(energy);
 //	   show(nrgCompounded);
 //	   show(Path);
 	   
@@ -169,6 +167,7 @@ public class SeamCarver {
 	   
 	   return seam;
    }
+		   
    
    private int relax(int i, int j, int[][] energy, int[][] nrgCompounded, int[][] Path) {
 
@@ -201,14 +200,12 @@ public class SeamCarver {
 		   picValid = true;
 	   }
 	   
-	   rows--;
-	   
 	   for (int i=0 ; i < seam.length ; i++) {
 		   if (i > 0 && (Math.abs(seam[i] - seam[i-1]) > 1))
 			   throw new java.lang.IllegalArgumentException(); 
 		   int index = seam[i];
-		   System.arraycopy(energy[i], index + 1, energy[i], index, rows - index);
-		   System.arraycopy(newpic[i], index + 1, newpic[i], index, rows - index);
+		   System.arraycopy(energy[i], index + 1, energy[i], index, rows - index - 1);
+		   System.arraycopy(newpic[i], index + 1, newpic[i], index, rows - index - 1);
 	   }
 //	   show(energy);
 //	   lastRemoved = LastRemoved.HOR;
@@ -218,7 +215,7 @@ public class SeamCarver {
 	   picTransposedValid = false;
 //	   energyTransposed = transpose(energy); 
 //	   newpicTransposed = transpose(newpic);
-	   
+	   rows--;
    }
    public void removeVerticalSeam(int[] seam) {
 	   // remove vertical seam from current picture
@@ -233,24 +230,25 @@ public class SeamCarver {
 		   picTransposedValid = true;
 	   }
    
-	   cols--;
-	   
 	   for (int i=0 ; i < seam.length ; i++) {
 		   if (i > 0 && (Math.abs(seam[i] - seam[i-1]) > 1))
 				   throw new java.lang.IllegalArgumentException();   
 		   int index = seam[i];
-		   System.arraycopy(energyTransposed[i], index + 1, energyTransposed[i], index, cols - index);
-		   System.arraycopy(newpicTransposed[i], index + 1, newpicTransposed[i], index, cols - index);
+		   System.arraycopy(energyTransposed[i], index + 1, energyTransposed[i], index, cols - index - 1);
+		   System.arraycopy(newpicTransposed[i], index + 1, newpicTransposed[i], index, cols - index - 1);
 	   }
+	   newpic = transpose(newpicTransposed);
+	   picValid = true;
+	   
 	   energyValid = false;
-	   picValid = false;
+//	   picValid = false;
 	   
 //	   show(energy);
 //	   lastRemoved = LastRemoved.VERT;
 	   recalcSeamBorders(seam, true); //do this before transposing
 	   
 //	   energy = transpose(energyTransposed);
-//	   newpic = transpose(newpicTransposed);
+	   cols--;
    }
    
    private void recalcSeamBorders(int[] seam, boolean vertical) {
@@ -259,20 +257,33 @@ public class SeamCarver {
 			   int index = seam[i];
 			   if (index > 0) {
 //				   energy[index-1][i] = (int) energy(index-1,i);
-				   energyTransposed[i][index-1] = (int) energy(index-1,i);//energy[index-1][i];
+//				   if (index-1 == 0)
+//					   energyTransposed[i][index-1] = 195075;
+//				   else
+					   energyTransposed[i][index-1] = (int) energy(index-1,i);//energy[index-1][i];
+				   
 			   }
 //			   energy[index][i] = (int) energy(index,i);
-			   energyTransposed[i][index] = (int) energy(index,i);//energy[index][i];
+//			   if (index == cols - 1)
+//				   energyTransposed[i][index] = 195075;
+//			   else
+				   energyTransposed[i][index] = (int) energy(index,i);//energy[index][i];
 		   }
 	   }
 	   else {
 		   for (int i=0 ; i < seam.length ; i++) {
 			   int index = seam[i];
 			   if (index > 0) {
-				   energy[i][index-1] = (int) energy(i,index-1);
+//				   if (index-1 == 0)
+//					   energy[i][index-1] = 195075;
+//				   else
+					   energy[i][index-1] = (int) energy(i,index-1);
 //				   energyTransposed[index-1][i] = energy[i][index-1];
 			   }
-			   energy[i][index] = (int) energy(i,index);
+//			   if (index == rows - 1)
+//				   energy[i][index] = 195075;
+//			   else
+				   energy[i][index] = (int) energy(i,index);
 //			   energyTransposed[index][i] = energy[i][index];
 		   }
 	   }
