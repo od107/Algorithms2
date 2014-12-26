@@ -1,7 +1,7 @@
 import java.util.*;
 
 public class BaseballElimination {
-	private Map<String, Integer> teams = new HashMap<String, Integer>();
+	private Map<String, Short> teams = new HashMap<String, Short>();
 	private short[] w, l, r; //wins, losses, remaining
 	private short[][] g; // games left to play
 
@@ -17,12 +17,12 @@ public class BaseballElimination {
 		l = new short[size];
 		g = new short[size][size];
 		
-		for(int i=0; !file.isEmpty(); i++) {
+		for(short i=0; !file.isEmpty(); i++) {
 			teams.put(file.readString(), i);
 			w[i] = file.readShort();
 			l[i] = file.readShort();
 			r[i] = file.readShort();
-			for(int j=0; j < size ; j++) {
+			for(short j=0; j < size ; j++) {
 				g[i][j] = file.readShort();
 			}
 		}
@@ -53,11 +53,38 @@ public class BaseballElimination {
 	}
 	public boolean isEliminated(String team) {
 		// TODO: is given team eliminated?
+		if (trivialElimination(team))
+			return true;
+		
 		return false;
 	}
+	
+	private boolean trivialElimination(String team) {
+		short index = teams.get(team);
+		
+		for (int i=0; i< teams.size() ; i++) {
+			if (i != index && w[i] > w[index] + r[index])
+				return true;
+		}
+		return false;
+	}
+	
 	public Iterable<String> certificateOfElimination(String team) {
 		// TODO: subset R of teams that eliminates given team; null if not eliminated
-		return teams.keySet();
+		if (trivialElimination(team))
+			return trivialEliminationCertificate(team);
+		return null;
+	}
+	
+	private Iterable<String> trivialEliminationCertificate(String team) {
+		List<String> cert = new ArrayList<String>();
+		short index = teams.get(team);
+		
+		for (String opponent : teams()) {
+			if (index != teams.get(opponent) && w[teams.get(opponent)] > w[index] + r[index])
+				cert.add(opponent);
+		}
+		return cert;
 	}
 	
 	public static void main(String[] args) {
