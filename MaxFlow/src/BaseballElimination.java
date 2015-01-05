@@ -36,30 +36,44 @@ public class BaseballElimination {
 		return teams.keySet();
 	}
 	public int wins(String team) {
+		if (teams.get(team) == null)
+			throw new java.lang.IllegalArgumentException("Team does not exist");
 		// number of wins for given team
 		return w[teams.get(team)];
 	}
 	public int losses(String team) {
+		if (teams.get(team) == null)
+			throw new java.lang.IllegalArgumentException("Team does not exist");
 		// number of losses for given team
 		return l[teams.get(team)];
 	}
 	public int remaining(String team) {
+		if (teams.get(team) == null)
+			throw new java.lang.IllegalArgumentException("Team does not exist");
 		// number of remaining games for given team
 		return r[teams.get(team)];
 	}
 	public int against(String team1, String team2) {
+		if (teams.get(team1) == null || teams.get(team2) == null)
+			throw new java.lang.IllegalArgumentException("Team does not exist");
 		// number of remaining games between team1 and team2
 		return g[teams.get(team1)][teams.get(team2)];
 	}
 	public boolean isEliminated(String team) {
+		if (teams.get(team) == null)
+			throw new java.lang.IllegalArgumentException("Team does not exist");
 		// TODO: is given team eliminated?
 		if (trivialElimination(team))
 			return true;
+//		else if (nonTrivialElimination(team))
+//			return true;
+			
 		
 		return false;
 	}
 	
 	private boolean trivialElimination(String team) {
+		
 		short index = teams.get(team);
 		
 		for (int i=0; i< teams.size() ; i++) {
@@ -69,7 +83,47 @@ public class BaseballElimination {
 		return false;
 	}
 	
+	private FlowNetwork createFlowNetwork(String team) {
+		// create flow network
+		//we do create the vertices for the teams under consideration 
+		//but their capacity will be set to 0 according to g
+
+		int opponents = teams.size(); // - 1 ?
+		int numberOfGames = opponents * opponents; //0;
+		int t = numberOfGames + opponents + 1;
+//		for (int i = opponents; i> 0; i--) {
+//			numberOfGames += i;
+//		}
+		short teamnbr= teams.get(team);
+		FlowNetwork fn = new FlowNetwork(2 + numberOfGames + opponents);
+		
+		//connect s to game vertices
+		for (int i=1; i<= numberOfGames; i++) {
+			if (i != teamnbr)
+				fn.addEdge(new FlowEdge(0,i,1));
+		}
+		//connect game vertices to team vertices
+		for (int i=1 ; i<= numberOfGames; i++) {
+			int m = numberOfGames / opponents + 1;
+			int n = numberOfGames % opponents + 1;
+			
+			//TODO: complete
+//			if ()
+		
+//			fn.addEdge(new FlowEdge(i, numberOfGames + 1, ));
+			fn.addEdge(new FlowEdge(i,opponents * opponents + 2, Double.POSITIVE_INFINITY));
+		}
+		// connect team vertices to t
+		for (int i=numberOfGames + 1; i <= numberOfGames + opponents; i++) {
+			if (i != 1 + numberOfGames + teamnbr)
+				fn.addEdge(new FlowEdge(i,t,1));
+		}
+		return fn;
+	}
+	
 	public Iterable<String> certificateOfElimination(String team) {
+		if (teams.get(team) == null)
+			throw new java.lang.IllegalArgumentException("Team does not exist");
 		// TODO: subset R of teams that eliminates given team; null if not eliminated
 		if (trivialElimination(team))
 			return trivialEliminationCertificate(team);
