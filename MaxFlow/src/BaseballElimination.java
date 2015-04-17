@@ -63,12 +63,10 @@ public class BaseballElimination {
 	public boolean isEliminated(String team) {
 		if (teams.get(team) == null)
 			throw new java.lang.IllegalArgumentException("Team does not exist");
-		// TODO: is given team eliminated?
 		if (trivialElimination(team))
 			return true;
-//		else if (nonTrivialElimination(team))
-//			return true;
-			
+		else if (nonTrivialElimination(team))
+			return true;
 		
 		return false;
 	}
@@ -84,6 +82,19 @@ public class BaseballElimination {
 		return false;
 	}
 	
+	private boolean nonTrivialElimination(String team) {
+		FlowNetwork fn = this.createFlowNetwork(team);
+		
+		FordFulkerson FF = new FordFulkerson(fn,0,fn.V()-1);
+		
+		for(FlowEdge edge : fn.adj(0)) {
+			if (edge.flow() != edge.capacity())
+				return true;
+		}
+		return false;
+	}
+	
+	//TODO: debug this
 	private FlowNetwork createFlowNetwork(String team) {
 		// create flow network
 		//we do create the vertices for the teams under consideration 
@@ -104,8 +115,8 @@ public class BaseballElimination {
 //			//the weight of the edge is not correct
 //		}
 		int gameNumber = 1;
-		for (int i=0; i <= g.length; i++) {
-			for(int j=0; j <= g.length; j++) {
+		for (int i=0; i < g.length; i++) {
+			for(int j=0; j < g.length; j++) {
 				if (i != teamX && j != teamX && j > i) { //or i > j?
 					//connect s to game vertices
 					fn.addEdge(new FlowEdge(0,gameNumber,g[i][j])); 
@@ -126,7 +137,7 @@ public class BaseballElimination {
 //		}
 		
 		// connect team vertices to t
-		for (int i=0; i <= nbrOfTeams; i++) {
+		for (int i=0; i < nbrOfTeams; i++) {
 			if (i != teamX) {
 				int weight = w[teamX] + r[teamX] - w[i];
 				fn.addEdge(new FlowEdge(i + nbrOfGames + 1,t,weight));
@@ -138,10 +149,15 @@ public class BaseballElimination {
 	public Iterable<String> certificateOfElimination(String team) {
 		if (teams.get(team) == null)
 			throw new java.lang.IllegalArgumentException("Team does not exist");
-		// TODO: subset R of teams that eliminates given team; null if not eliminated
 		if (trivialElimination(team))
 			return trivialEliminationCertificate(team);
-		return null;
+		else if(nonTrivialElimination(team))
+			return nontrivialEliminationCertificate(team);
+		else {
+			List<String> empty = new ArrayList<String>();
+			empty.add("Team has not been eliminated");
+			return empty;
+		}
 	}
 	
 	private Iterable<String> trivialEliminationCertificate(String team) {
@@ -152,6 +168,15 @@ public class BaseballElimination {
 			if (index != teams.get(opponent) && w[teams.get(opponent)] > w[index] + r[index])
 				cert.add(opponent);
 		}
+		return cert;
+	}
+	
+	//TODO: fix this
+	private Iterable<String> nontrivialEliminationCertificate(String team) {
+		List<String> cert = new ArrayList<String>();
+		short index = teams.get(team);
+		
+		cert.add("to be defined");
 		return cert;
 	}
 	
