@@ -1,6 +1,7 @@
 import java.util.*;
 
 public class BaseballElimination {
+	// this collection could just as well be an arraylist but a map has a small performance advantage
 	private Map<String, Short> teams = new HashMap<String, Short>();
 	private short[] w, l, r; //wins, losses, remaining
 	private short[][] g; // games left to play
@@ -88,35 +89,48 @@ public class BaseballElimination {
 		//we do create the vertices for the teams under consideration 
 		//but their capacity will be set to 0 according to g
 
-		int opponents = teams.size(); // - 1 ?
-		int numberOfGames = opponents * opponents; //0;
-		int t = numberOfGames + opponents + 1;
+		int nbrOfTeams = teams.size(); // - 1 ?
+		int nbrOfGames = ((nbrOfTeams * nbrOfTeams) - nbrOfTeams) / 2; //not including team x
+		int t = nbrOfGames + nbrOfTeams;
 //		for (int i = opponents; i> 0; i--) {
 //			numberOfGames += i;
 //		}
-		short teamnbr= teams.get(team);
-		FlowNetwork fn = new FlowNetwork(2 + numberOfGames + opponents);
+		short teamX = teams.get(team);
+		FlowNetwork fn = new FlowNetwork(2 + nbrOfGames + nbrOfTeams);
 		
-		//connect s to game vertices
-		for (int i=1; i<= numberOfGames; i++) {
-			if (i != teamnbr)
-				fn.addEdge(new FlowEdge(0,i,1));
+//		for (int i=1; i<= numberOfGames; i++) {
+//			if (i != teamX)
+//				fn.addEdge(new FlowEdge(0,i,1));
+//			//the weight of the edge is not correct
+//		}
+		int gameNumber = 1;
+		for (int i=0; i <= g.length; i++) {
+			for(int j=0; j <= g.length; j++) {
+				if (i != teamX && j != teamX && j > i) { //or i > j?
+					//connect s to game vertices
+					fn.addEdge(new FlowEdge(0,gameNumber,g[i][j])); 
+					//connect game vertices to team vertices
+					fn.addEdge(new FlowEdge(gameNumber,nbrOfGames + i + 1,Double.POSITIVE_INFINITY));
+					fn.addEdge(new FlowEdge(gameNumber,nbrOfGames + j + 1,Double.POSITIVE_INFINITY));
+					gameNumber++;
+				}
+			}
 		}
+		
 		//connect game vertices to team vertices
-		for (int i=1 ; i<= numberOfGames; i++) {
-			int m = numberOfGames / opponents + 1;
-			int n = numberOfGames % opponents + 1;
-			
-			//TODO: complete
-//			if ()
+//		for (int i=1 ; i<= numberOfGames; i++) {
+//			int m = numberOfGames / (nbrOfTeams - 1) + 1;
+//			int n = numberOfGames % (nbrOfTeams - 1) + 1;
+//			
+//			fn.addEdge(new FlowEdge(i,nbrOfGames + i , Double.POSITIVE_INFINITY));
+//		}
 		
-//			fn.addEdge(new FlowEdge(i, numberOfGames + 1, ));
-			fn.addEdge(new FlowEdge(i,opponents * opponents + 2, Double.POSITIVE_INFINITY));
-		}
 		// connect team vertices to t
-		for (int i=numberOfGames + 1; i <= numberOfGames + opponents; i++) {
-			if (i != 1 + numberOfGames + teamnbr)
-				fn.addEdge(new FlowEdge(i,t,1));
+		for (int i=0; i <= nbrOfTeams; i++) {
+			if (i != teamX) {
+				int weight = w[teamX] + r[teamX] - w[i];
+				fn.addEdge(new FlowEdge(i + nbrOfGames + 1,t,weight));
+			}
 		}
 		return fn;
 	}
