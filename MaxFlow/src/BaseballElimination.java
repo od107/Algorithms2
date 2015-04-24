@@ -72,6 +72,7 @@ public class BaseballElimination {
 	}
 	
 	private boolean trivialElimination(String team) {
+		assert team != null;
 		
 		short index = teams.get(team);
 		
@@ -83,9 +84,12 @@ public class BaseballElimination {
 	}
 	
 	private boolean nonTrivialElimination(String team) {
+		assert team != null;
+		
 		FlowNetwork fn = this.createFlowNetwork(team);
 		
-		FordFulkerson FF = new FordFulkerson(fn,0,fn.V()-1);
+		//FordFulkerson FF = 
+		new FordFulkerson(fn,0,fn.V()-1);
 		
 		for(FlowEdge edge : fn.adj(0)) {
 			if (edge.flow() != edge.capacity())
@@ -94,26 +98,18 @@ public class BaseballElimination {
 		return false;
 	}
 	
-	//TODO: debug this
 	private FlowNetwork createFlowNetwork(String team) {
+		assert team != null;
 		// create flow network
 		//we do create the vertices for the teams under consideration 
 		//but their capacity will be set to 0 according to g
 
-		int nbrOfTeams = teams.size(); // - 1 ?
+		int nbrOfTeams = teams.size(); // including team x
 		int nbrOfGames = ((nbrOfTeams * nbrOfTeams) - nbrOfTeams) / 2; //not including team x
-		int t = nbrOfGames + nbrOfTeams;
-//		for (int i = opponents; i> 0; i--) {
-//			numberOfGames += i;
-//		}
+		int t = nbrOfGames + nbrOfTeams + 1; 
 		short teamX = teams.get(team);
 		FlowNetwork fn = new FlowNetwork(2 + nbrOfGames + nbrOfTeams);
 		
-//		for (int i=1; i<= numberOfGames; i++) {
-//			if (i != teamX)
-//				fn.addEdge(new FlowEdge(0,i,1));
-//			//the weight of the edge is not correct
-//		}
 		int gameNumber = 1;
 		for (int i=0; i < g.length; i++) {
 			for(int j=0; j < g.length; j++) {
@@ -127,14 +123,6 @@ public class BaseballElimination {
 				}
 			}
 		}
-		
-		//connect game vertices to team vertices
-//		for (int i=1 ; i<= numberOfGames; i++) {
-//			int m = numberOfGames / (nbrOfTeams - 1) + 1;
-//			int n = numberOfGames % (nbrOfTeams - 1) + 1;
-//			
-//			fn.addEdge(new FlowEdge(i,nbrOfGames + i , Double.POSITIVE_INFINITY));
-//		}
 		
 		// connect team vertices to t
 		for (int i=0; i < nbrOfTeams; i++) {
@@ -154,13 +142,16 @@ public class BaseballElimination {
 		else if(nonTrivialElimination(team))
 			return nontrivialEliminationCertificate(team);
 		else {
-			List<String> empty = new ArrayList<String>();
-			empty.add("Team has not been eliminated");
-			return empty;
+			return null;
+//			List<String> empty = new ArrayList<String>();
+//			empty.add("Team has not been eliminated");
+//			return empty;
 		}
 	}
 	
 	private Iterable<String> trivialEliminationCertificate(String team) {
+		assert team != null;
+		
 		List<String> cert = new ArrayList<String>();
 		short index = teams.get(team);
 		
@@ -171,12 +162,22 @@ public class BaseballElimination {
 		return cert;
 	}
 	
-	//TODO: fix this
 	private Iterable<String> nontrivialEliminationCertificate(String team) {
+		assert team != null;
+		
 		List<String> cert = new ArrayList<String>();
 		short index = teams.get(team);
+		FlowNetwork fn = this.createFlowNetwork(team);
 		
-		cert.add("to be defined");
+		FordFulkerson FF = new FordFulkerson(fn,0,fn.V()-1);
+		//find min-cut
+		int nbrOfTeams = teams.size();
+		
+		for (String opponent : teams()) {
+			if (index != teams.get(opponent) && FF.inCut(fn.V()-nbrOfTeams-1+teams.get(opponent)))
+				cert.add(opponent);
+		}
+		
 		return cert;
 	}
 	
