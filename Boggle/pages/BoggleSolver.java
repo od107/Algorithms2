@@ -2,14 +2,17 @@ import java.util.*;
 
 public class BoggleSolver
 {
-	//TODO: implement Qu functionality
-	private TrieSTR26<Integer> dict; //improved memory by using 26 radix Trie
+	//TODO: the performance is not up to par:
+	// create testing methods and try to improve performance
+//	private TrieSTR26<Integer> dict; //improved memory by using 26 radix Trie
+	private TST<Integer> dict;
 	private int[] points = {0,0,0,1,1,2,3,5,11}; //points gained for words of certain length
 	
     // Initializes the data structure using the given array of strings as the dictionary.
     // (You can assume each word in the dictionary contains only the uppercase letters A through Z.)
     public BoggleSolver(String[] dictionary) {
-    	dict = new TrieSTR26<Integer>();
+//    	dict = new TrieSTR26<Integer>();
+    	dict = new TST<Integer>();
     	for(String word : dictionary) {
     		if (word.length() > 2) {
     			if(word.length() < 8) 
@@ -46,13 +49,19 @@ public class BoggleSolver
     
     private void findwords(int col, int row, Set<String> wordlist,boolean[][] visited, 
     		String word, BoggleBoard board) {
-    	word += board.getLetter(row, col);
+    	if(String.valueOf(board.getLetter(row,col)).equals("Q"))
+    		word += "QU";
+    	else
+    		word += board.getLetter(row, col);
     	visited[col][row] = true;
     	if(dict.contains(word))
     		wordlist.add(word);
     	
-    	Queue<String> possibleWords = (Queue<String>) dict.keysWithPrefix(word);
+    	
+//    	Queue<String> possibleWords = (Queue<String>) dict.keysWithPrefix(word);
+    	Queue<String> possibleWords = (Queue<String>) dict.prefixMatch(word);
     	if(!possibleWords.isEmpty()) {
+//    	if(dict.keyswithPrefixExist(word)) { //TODO: work on this one
     		for(int i=-1;i<2;i++) {
     			for(int j=-1;j<2;j++) {
     				if(col + i >= 0 && col + i < board.cols() 
@@ -70,7 +79,7 @@ public class BoggleSolver
     // (You can assume the word contains only the uppercase letters A through Z.)
     public int scoreOf(String word) {
     	if(dict.contains(word))
-    		return dict.get(word);
+    		return (Integer) dict.get(word);
     	else
     		return 0;
     }
