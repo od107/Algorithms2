@@ -2,13 +2,14 @@ import java.util.*;
 
 public class BoggleSolver
 {
-	TrieST<Integer> dict; //this is 256-way trie: not ideal, use TrieSTR26??
-	int[] points = {0,0,0,1,1,2,3,5,11}; //points gained for words of certain length
+	//TODO: implement Qu functionality
+	private TrieSTR26<Integer> dict; //improved memory by using 26 radix Trie
+	private int[] points = {0,0,0,1,1,2,3,5,11}; //points gained for words of certain length
 	
     // Initializes the data structure using the given array of strings as the dictionary.
     // (You can assume each word in the dictionary contains only the uppercase letters A through Z.)
     public BoggleSolver(String[] dictionary) {
-    	dict = new TrieST<Integer>();
+    	dict = new TrieSTR26<Integer>();
     	for(String word : dictionary) {
     		if (word.length() > 2) {
     			if(word.length() < 8) 
@@ -45,7 +46,7 @@ public class BoggleSolver
     
     private void findwords(int col, int row, Set<String> wordlist,boolean[][] visited, 
     		String word, BoggleBoard board) {
-    	word += board.getLetter(col, row);
+    	word += board.getLetter(row, col);
     	visited[col][row] = true;
     	if(dict.contains(word))
     		wordlist.add(word);
@@ -58,7 +59,6 @@ public class BoggleSolver
     						&& row + j >= 0 && row + j < board.rows()
     						&& visited[col+i][row+j] != true) {
     					findwords(col+i, row+j,wordlist,visited, word, board);
-
     				}
     			}
     		}
