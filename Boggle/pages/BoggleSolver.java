@@ -2,7 +2,7 @@ import java.util.*;
 
 public class BoggleSolver
 {
-	TrieST<Integer> dict; //this is 256-way trie: not ideal, create custom 26-way trie?
+	TrieST<Integer> dict; //this is 256-way trie: not ideal, use TrieSTR26??
 	int[] points = {0,0,0,1,1,2,3,5,11}; //points gained for words of certain length
 	
     // Initializes the data structure using the given array of strings as the dictionary.
@@ -21,26 +21,51 @@ public class BoggleSolver
 
     // Returns the set of all valid words in the given Boggle board, as an Iterable.
     public Iterable<String> getAllValidWords(BoggleBoard board) {
-    	Set<String> wordlist = new HashSet<String>();
+    	Set<String> boggleWords = new HashSet<String>();
     	
     	boolean[][] visited = new boolean[board.cols()][board.rows()];
     	
     	for(int i = 0; i < board.cols(); i++) {
     		for (int j=0; j < board.rows(); j++) { //start from all possible points
-    			int row = i;
-    			int col = j;
-    			//TODO: create dfs
-    			
+    			emptyBool(visited);
+    			String word = "";
+    			findwords(i,j,boggleWords, visited,word, board);
     		}
     	}
-    	
-    	return wordlist;
+    	return boggleWords;
     }
     
-    private void dfs(int row, int col,HashSet wordlist) {
-    	
+    private void emptyBool(boolean[][] array) {
+    	for(int i = 0; i < array.length; i++) {
+    		for (int j=0; j < array[0].length; j++) {
+    			array[i][j] = false;
+    		}
+    	}
     }
+    
+    private void findwords(int col, int row, Set<String> wordlist,boolean[][] visited, 
+    		String word, BoggleBoard board) {
+    	word += board.getLetter(col, row);
+    	visited[col][row] = true;
+    	if(dict.contains(word))
+    		wordlist.add(word);
+    	
+    	Queue<String> possibleWords = (Queue<String>) dict.keysWithPrefix(word);
+    	if(!possibleWords.isEmpty()) {
+    		for(int i=-1;i<2;i++) {
+    			for(int j=-1;j<2;j++) {
+    				if(col + i >= 0 && col + i < board.cols() 
+    						&& row + j >= 0 && row + j < board.rows()
+    						&& visited[col+i][row+j] != true) {
+    					findwords(col+i, row+j,wordlist,visited, word, board);
 
+    				}
+    			}
+    		}
+    	}
+    	visited[col][row] = false;
+    }
+    
     // Returns the score of the given word if it is in the dictionary, zero otherwise.
     // (You can assume the word contains only the uppercase letters A through Z.)
     public int scoreOf(String word) {
