@@ -1,5 +1,5 @@
 /** 	adaptation of the TrieST class provided in the algs4 package
- * 		now with radix R = 26
+ * 		now with radix R = 26 because in our case we only use letters A-Z
 */
 public class TrieSTR26<Value> {
 
@@ -105,12 +105,23 @@ public class TrieSTR26<Value> {
 	    }
 
 	    /**
+	     * New method returns boolean value that indicates code with <tt>prefix</tt> exists.
+	     * @param prefix the prefix
+	     * @return boolean value that indicates code with <tt>prefix</tt> exist,
+	     *     as an iterable
+	     */
+	    public boolean keyWithPrefixExist(String prefix) {
+	        if(get(root, prefix, 0) == null) 
+	        	return false;
+	        return true;
+	    }
+	    
+	    /**
 	     * Returns all of the keys in the set that start with <tt>prefix</tt>.
 	     * @param prefix the prefix
 	     * @return all of the keys in the set that start with <tt>prefix</tt>,
 	     *     as an iterable
 	     */
-	    //TODO: optimize this method for our use
 	    public Iterable<String> keysWithPrefix(String prefix) {
 	        Queue<String> results = new Queue<String>();
 	        Node x = get(root, prefix, 0);
