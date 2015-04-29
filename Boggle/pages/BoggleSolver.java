@@ -4,15 +4,16 @@ public class BoggleSolver
 {
 	//TODO: the performance is not up to par:
 	// create testing methods and try to improve performance
-//	private TrieSTR26<Integer> dict; //improved memory by using 26 radix Trie
-	private TST<Integer> dict;
+	
+	private TrieSTR26<Integer> dict; //improved memory by using 26 radix Trie
+//	private TST<Integer> dict;
 	private int[] points = {0,0,0,1,1,2,3,5,11}; //points gained for words of certain length
 	
     // Initializes the data structure using the given array of strings as the dictionary.
     // (You can assume each word in the dictionary contains only the uppercase letters A through Z.)
     public BoggleSolver(String[] dictionary) {
-//    	dict = new TrieSTR26<Integer>();
-    	dict = new TST<Integer>();
+    	dict = new TrieSTR26<Integer>();
+//    	dict = new TST<Integer>();
     	for(String word : dictionary) {
     		if (word.length() > 2) {
     			if(word.length() < 8) 
@@ -59,9 +60,9 @@ public class BoggleSolver
     	
     	
 //    	Queue<String> possibleWords = (Queue<String>) dict.keysWithPrefix(word);
-    	Queue<String> possibleWords = (Queue<String>) dict.prefixMatch(word);
-    	if(!possibleWords.isEmpty()) {
-//    	if(dict.keyswithPrefixExist(word)) { //TODO: work on this one
+//    	Queue<String> possibleWords = (Queue<String>) dict.prefixMatch(word);
+//    	if(!possibleWords.isEmpty()) {
+    	if(dict.keyWithPrefixExist(word)) { 
     		for(int i=-1;i<2;i++) {
     			for(int j=-1;j<2;j++) {
     				if(col + i >= 0 && col + i < board.cols() 
@@ -104,13 +105,15 @@ public class BoggleSolver
         String[] dictionary = in.readAllStrings();
         BoggleSolver solver = new BoggleSolver(dictionary);
         long startTime = System.nanoTime();
-        int nbrSolved = 0;
+        double nbrSolved = 0;
         
         while(System.nanoTime() - startTime < 5000000000.0) {// 5sec 
         	BoggleBoard board = new BoggleBoard();
         	solver.getAllValidWords(board);
         	nbrSolved++;
         }
-        System.out.println("Managed to solve " + nbrSolved + " boards in 5 sec");
+        long stopTime = System.nanoTime();
+        System.out.println("Managed to solve " + nbrSolved + " boards in " + (stopTime - startTime)/10e8 + " sec");
+        System.out.println("Managed to solve " + nbrSolved/(stopTime - startTime)*10e8 + " boards per sec");
     }
 }
