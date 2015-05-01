@@ -87,29 +87,31 @@ public class BoggleSolver
     
     public static void main(String[] args)
     {
-    	//original testing: compute sum of all valid words in a single board
-//        In in = new In(args[0]);
-//        String[] dictionary = in.readAllStrings();
-//        BoggleSolver solver = new BoggleSolver(dictionary);
-//        BoggleBoard board = new BoggleBoard(args[1]);
-//        int score = 0;
-//        for (String word : solver.getAllValidWords(board))
-//        {
-//            StdOut.println(word);
-//            score += solver.scoreOf(word);
-//        }
-//        StdOut.println("Score = " + score);
-        
-        //new testing: compute nbr of random boards can be computed within 5 sec
         In in = new In(args[0]);
         String[] dictionary = in.readAllStrings();
         BoggleSolver solver = new BoggleSolver(dictionary);
+        
+        //original testing: compute sum of all valid words in a single board
+        BoggleBoard board = new BoggleBoard(args[1]);
+        int score = 0;
+        for (String word : solver.getAllValidWords(board))
+        {
+            StdOut.println(word);
+            score += solver.scoreOf(word);
+        }
+        StdOut.println("Score = " + score);
+        
+//        In in = new In(args[0]);
+//        String[] dictionary = in.readAllStrings();
+//        BoggleSolver solver = new BoggleSolver(dictionary);
+        
+        //new testing: compute nbr of random boards can be computed within 5 sec
         long startTime = System.nanoTime();
         double nbrSolved = 0;
         
         while(System.nanoTime() - startTime < 5000000000.0) {// 5sec 
-        	BoggleBoard board = new BoggleBoard();
-        	solver.getAllValidWords(board);
+        	BoggleBoard randomBoard = new BoggleBoard();
+        	solver.getAllValidWords(randomBoard);
         	nbrSolved++;
         }
         long stopTime = System.nanoTime();

@@ -8,6 +8,8 @@ public class TrieSTR26<Value> {
 
 	    private Node root;      // root of trie
 	    private int N;          // number of keys in trie
+	    private String lastPrefix; //store the last prefix Search
+	    private Node lastPrefixNode;
 
 	    // R-way trie node
 	    private static class Node {
@@ -110,12 +112,33 @@ public class TrieSTR26<Value> {
 	     * @return boolean value that indicates code with <tt>prefix</tt> exist,
 	     *     as an iterable
 	     */
+	    //TODO: exploit the fact that subsequent searches can start from the node of the previous search 
+	    //optimalised version (works but is not faster than original ~ 1270 boards per sec
 	    public boolean keyWithPrefixExist(String prefix) {
-	        if(get(root, prefix, 0) == null) 
-	        	return false;
-	        return true;
+	    	if(lastPrefix != null && prefix.startsWith(lastPrefix)){ //instead of testing for this we can always start the search there...
+	    		Node search = get(lastPrefixNode, prefix, lastPrefix.length()); 
+	    		if(search == null)
+	    			return false;
+	    		lastPrefix = prefix;
+	    		lastPrefixNode = search;
+	    		return true;
+	    	}
+	    	else {
+	    		Node search = get(root, prefix, 0);
+	    		if(search == null) //search from the root
+	    			return false;
+	    		lastPrefix = prefix;
+	    		lastPrefixNode = search;
+	    		return true;
+	    	}
 	    }
 	    
+	    //working version (1300 boards per sec @ work and home)
+//	    public boolean keyWithPrefixExist(String prefix) {
+//	    	if(get(root, prefix, 0) == null) 
+//	        	return false;
+//	        return true;
+//	    }
 	    /**
 	     * Returns all of the keys in the set that start with <tt>prefix</tt>.
 	     * @param prefix the prefix
